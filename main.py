@@ -3,7 +3,7 @@ from pyrogram import Client, filters
 from pyrogram.types import Message
 
 # --- CONFIGURATION ---
-API_ID = int(os.getenv("API_ID", "123456"))          # replace or set via env
+API_ID = int(os.getenv("API_ID", "29954197"))          # replace or set via env
 API_HASH = os.getenv("API_HASH", "yourapihash")      # replace or set via env
 BOT_TOKEN = os.getenv("BOT_TOKEN", "8222967896:AAH75Zv8EWpQ_Z3Ojwaq0_gzTF1Z6m4YU8I)  # replace or set via env
 
