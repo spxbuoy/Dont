@@ -3,14 +3,18 @@ from pyrogram import Client, filters
 from pyrogram.types import Message
 
 # --- CONFIGURATION ---
-API_ID = int(os.getenv("API_ID", "29954197"))          # replace or set via env
-API_HASH = os.getenv("API_HASH", "4ea7a4f028bed2a8077c65085dddc9c4")
-      # replace or set via env
-BOT_TOKEN = os.getenv("BOT_TOKEN", "8222967896:AAH75Zv8EWpQ_Z3Ojwaq0_gzTF1Z6m4YU8I")  # replace or set via env
+API_ID = int(os.getenv("API_ID", "29954197"))  # replace or set via env
+API_HASH = os.getenv("API_HASH", "4ea7a4f028bed2a8077c65085dddc9c4")  # rotate if exposed
+BOT_TOKEN = os.getenv("BOT_TOKEN", "8222967896:AAH75Zv8EWpQ_Z3Ojwaq0_gzTF1Z6m4YU8I")  # rotate if exposed
 
-# Dummy in-memory premium store (replace with DB/storage)
+# --- PREMIUM CONFIG ---
+# Put your Telegram numeric user ID(s) here to auto-grant premium.
+# Example: AUTO_PREMIUM_IDS = {123456789, 987654321}
+AUTO_PREMIUM_IDS = {7941175119}  # <<< replace with your own user ID
+
+# In-memory premium store (you can persist this later if needed)
 premium_users = set()
-# Dummy allowed sites per user (replace with persistent DB)
+# Dummy allowed sites per user (replace with persistent DB if desired)
 user_sites = {}
 
 # Welcome/start message
@@ -38,7 +42,6 @@ START_TEXT = """🚀 𝙃𝙚𝙡𝙡𝙤 𝘽𝙪𝙙𝙙𝙮!
    
 /mtxt
    ↳ 𝙁𝙤𝙧 𝘾𝙝𝙚𝙘𝙠𝙞𝙣𝙜 𝘾𝙖𝙧𝙙𝙨 𝙁𝙧𝙤𝙢 𝙏𝙚𝙭𝙩 𝙁𝙞𝙡𝙚
-
 """
 
 UNAUTH_MSG = """🚫 𝙐𝙣𝙖𝙪𝙩𝙝𝙤𝙧𝙞𝙨𝙚𝙙 𝘼𝙘𝙘𝙚𝙨𝙨!
@@ -48,11 +51,17 @@ UNAUTH_MSG = """🚫 𝙐𝙣𝙖𝙪𝙩𝙝𝙤𝙧𝙞𝙨𝙚𝙙 𝘼𝙘�
 𝙁𝙤𝙧 𝙥𝙧𝙞𝙫𝙖𝙩𝙚 𝙖𝙘𝙘𝙚𝙨𝙨, 𝙘𝙤𝙣𝙩𝙖𝙘𝙩 @𝙈𝙤𝙙_𝘽𝙮_𝙆𝙖𝙢𝙖𝙡
 """
 
+# Instantiate client
 app = Client("my_bot", api_id=API_ID, api_hash=API_HASH, bot_token=BOT_TOKEN)
 
 
 def is_premium(user_id: int) -> bool:
-    return user_id in premium_users
+    return user_id in premium_users or user_id in AUTO_PREMIUM_IDS
+
+
+# Optionally auto-add the AUTO_PREMIUM_IDS into the in-memory set so they appear if you inspect premium_users
+for uid in AUTO_PREMIUM_IDS:
+    premium_users.add(uid)
 
 
 @app.on_message(filters.command("start"))
@@ -62,8 +71,6 @@ def start_handler(_, msg: Message):
 
 @app.on_message(filters.command("add"))
 def add_handler(_, msg: Message):
-    # Example: /add site.com another.com
-    # Check premium?
     if not is_premium(msg.from_user.id):
         return msg.reply_text(UNAUTH_MSG)
     args = msg.command[1:]
@@ -75,7 +82,6 @@ def add_handler(_, msg: Message):
 
 @app.on_message(filters.command("info"))
 def info_handler(_, msg: Message):
-    # Always shows unauthorized if not premium (per your spec)
     if not is_premium(msg.from_user.id):
         return msg.reply_text(UNAUTH_MSG)
     sites = user_sites.get(msg.from_user.id, set())
@@ -99,28 +105,22 @@ def redeem_handler(_, msg: Message):
     if len(msg.command) < 2:
         return msg.reply_text("Usage: /redeem <key>")
     key = msg.command[1]
-    # Placeholder: in real usage validate key against DB or algorithm
-    # For demo, any key starting with "PREM" grants premium
-    if key.startswith("PREM"):
+    # Placeholder logic: any key starting with "PREM" grants premium
+    if key.upper().startswith("PREM"):
         premium_users.add(msg.from_user.id)
         msg.reply_text("🎉 Premium activated! You now have access.")
     else:
         msg.reply_text("❌ Invalid key.")
 
 
-# Single card check
 @app.on_message(filters.command("sh"))
 def single_card(_, msg: Message):
-    # Here you would integrate your existing card checking logic.
-    # As per spec, if not premium show unauthorized.
     if not is_premium(msg.from_user.id):
         return msg.reply_text(UNAUTH_MSG)
-    # Example echo
     payload = msg.text.split(maxsplit=1)[1] if len(msg.text.split()) > 1 else ""
     msg.reply_text(f"Processing single card: {payload}")
 
 
-# Mass card check
 @app.on_message(filters.command("msh"))
 def mass_card(_, msg: Message):
     if not is_premium(msg.from_user.id):
@@ -129,7 +129,6 @@ def mass_card(_, msg: Message):
     msg.reply_text(f"Processing mass card list: {payload}")
 
 
-# Text file card check (stub)
 @app.on_message(filters.command("mtxt"))
 def mtxt_handler(_, msg: Message):
     if not is_premium(msg.from_user.id):
@@ -137,10 +136,8 @@ def mtxt_handler(_, msg: Message):
     msg.reply_text("Processing cards from text (not implemented).")
 
 
-# Fallback for other messages / unauthorized
 @app.on_message(filters.private)
 def fallback(_, msg: Message):
-    # If user types unknown command, show unauthorized style message
     if msg.text and msg.text.startswith("/"):
         msg.reply_text(UNAUTH_MSG)
 
@@ -148,3 +145,4 @@ def fallback(_, msg: Message):
 if __name__ == "__main__":
     print("Bot is starting...")
     app.run()
+          
