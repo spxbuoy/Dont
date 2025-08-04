@@ -6,7 +6,7 @@ from pyrogram.types import Message
 API_ID = int(os.getenv("API_ID", "29954197"))          # replace or set via env
 API_HASH = os.getenv("API_HASH", "4ea7a4f028bed2a8077c65085dddc9c4")
       # replace or set via env
-BOT_TOKEN = os.getenv("BOT_TOKEN", "8222967896:AAH75Zv8EWpQ_Z3Ojwaq0_gzTF1Z6m4YU8I)  # replace or set via env
+BOT_TOKEN = os.getenv("BOT_TOKEN", "8222967896:AAH75Zv8EWpQ_Z3Ojwaq0_gzTF1Z6m4YU8I")  # replace or set via env
 
 # Dummy in-memory premium store (replace with DB/storage)
 premium_users = set()
